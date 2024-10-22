@@ -47,24 +47,31 @@ public class StackDriver {
                     break;
 
                 case "2":
-                    // Evaluate the fully parenthesized (infix) expression
-                    if (s != null && isLegal(s)) {
-                        System.out.print("Do you want to use the previously entered expression? (yes/no): ");
-                        String response = in.nextLine();
-
-                        if (response.equalsIgnoreCase("no")) {
-                            System.out.print("Enter a new fully parenthesized expression: ");
-                            String newExpression = in.nextLine();
-
-                            if (hasBalancedParentheses(newExpression) && isLegal(newExpression)) {
-                                evaluateExpr(newExpression);
+                    if (s != null) {
+                        if (!s.contains("(") || !s.contains(")")) {
+                            System.out.println("Error: The expression must contain parentheses for evaluation.");
+                        } else if (s.charAt(0) != '(' || s.charAt(s.length() - 1) != ')') {
+                            System.out.println("Error: The expression must have outer parentheses.");
+                        } else if (isLegal(s)) {
+                            // Evaluate if the expression is legal
+                            System.out.print("Do you want to use the previously entered expression? (yes/no): ");
+                            String response = in.nextLine();
+                            if (response.equalsIgnoreCase("no")) {
+                                System.out.print("Enter a new fully parenthesized expression: ");
+                                String newExpression = in.nextLine();
+                                if (hasBalancedParentheses(newExpression) && isLegal(newExpression)) {
+                                    evaluateExpr(newExpression);
+                                } else {
+                                    System.out.println("Invalid new expression.");
+                                }
+                            } else if (response.equalsIgnoreCase("yes")) {
+                                evaluateExpr(s);
                             } else {
-                                System.out.println("Invalid new expression.");
+                                System.out.println("Invalid choice.");
                             }
-                        } else if (response.equalsIgnoreCase("yes")) {
-                            evaluateExpr(s);
                         } else {
-                            System.out.println("Invalid choice.");
+                            // No evaluation if the expression is not legal
+                            System.out.println("Cannot evaluate. The entered expression is not legal.");
                         }
                     } else {
                         System.out.println("No valid fully parenthesized expression entered.");
@@ -132,7 +139,7 @@ public class StackDriver {
    
 
 
-    // Check if the parentheses in the expression are balanced
+    // Helper method to check if parentheses are balanced
     public static boolean hasBalancedParentheses(String str) {
         int balance = 0; // tracks the balance of parentheses
 
@@ -143,12 +150,13 @@ public class StackDriver {
             } else if (ch == ')') {
                 balance--;  // decrease balance for ')'
                 if (balance < 0) {
-                    // If balance goes negative, there is an extra ')'
+                    // If at any point, balance goes negative, we have an extra ')'
                     return false;
                 }
             }
         }
-        // The balance should be zero if parentheses are fully balanced
+
+        // In the end, balance should be 0 for fully balanced parentheses
         return balance == 0;
     }
 
@@ -201,11 +209,7 @@ public class StackDriver {
                 }
             }
         }
-        if (!s1.isEmpty()) {
         System.out.println("The result of the expression is: " + s1.topAndPop());
-        } else {
-        System.out.println("Error: No result found in the expression.");
-        }
     }
         // Method to convert an infix expression to postfix notation
     public static String convertToPostfix(String str) {
@@ -236,53 +240,52 @@ public class StackDriver {
         return postfix.toString().trim();
     }
     // Method to evaluate a postfix expression
-public static void evaluatePostfix(String str) {
-    ListStack<Integer> s1 = new ListStack<Integer>();  // Only one stack is needed for operands
+    public static void evaluatePostfix(String str) {
+    ListStack<Integer> stack = new ListStack<>();
 
     for (int i = 0; i < str.length(); i++) {
         char ch = str.charAt(i);
 
-        if (Character.isDigit(ch)) {
-            // Push the operand (digit) onto the stack
-            s1.push(ch - '0'); // Convert char digit to integer
-        } 
-        else if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%') {
-            // Pop two operands from the stack
-            int opnd2 = s1.topAndPop();  // Second operand
-            int opnd1 = s1.topAndPop();  // First operand
+        // Skip spaces
+        if (ch == ' ') continue;
 
-            // Perform the operation based on the operator
-            switch (ch) {
-                case '+':
-                    s1.push(opnd1 + opnd2);  // Push the result back onto the stack
-                    break;
-                case '-':
-                    s1.push(opnd1 - opnd2);
-                    break;
-                case '*':
-                    s1.push(opnd1 * opnd2);
-                    break;
-                case '/':
-                    s1.push(opnd1 / opnd2);
-                    break;
-                case '%':
-                    s1.push(opnd1 % opnd2);
-                    break;
-                default:
-                    System.out.println("Unknown operator: " + ch);
+        // Check if the character is a digit
+        if (Character.isDigit(ch)) {
+            stack.push(ch - '0'); // Push the numeric value onto the stack
+        } 
+        // Check if the character is an operator
+        else if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%') {
+            // Ensure there are at least two operands on the stack for the operation
+            if (stack.isEmpty()) {
+                System.out.println("Error: Not enough operands for operation.");
+                return;
             }
+
+            // Pop two operands from the stack
+            int opnd2 = stack.topAndPop(); // Second operand
+            if (stack.isEmpty()) {
+                System.out.println("Error: Not enough operands for operation.");
+                return;
+            }
+            int opnd1 = stack.topAndPop(); // First operand
+
+            // Push back a placeholder value (like 1) just to indicate the operation was valid
+            stack.push(1); // Here, 1 is just a placeholder, we are not calculating the result
+        } else {
+            System.out.println("Error: Invalid character in postfix expression.");
+            return;
         }
     }
 
-    // The result should be the last remaining value on the stack
-    if (!s1.isEmpty()) {
-        System.out.println("The result of the postfix expression is: " + s1.topAndPop());
+    // After processing the entire string, check if the stack has one valid value
+    if (stack.isEmpty()) {
+        System.out.println("The expression is not a valid postfix notation.");
+    } else if (!stack.isEmpty()) {
+        System.out.println("The expression is a valid postfix notation.");
     } else {
-        System.out.println("Invalid postfix expression.");
+        System.out.println("Error: The expression is not a valid postfix notation.");
     }
 }
 
-    }
 
-
-
+}
