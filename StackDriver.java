@@ -23,44 +23,55 @@ public class StackDriver {
             String choice = in.nextLine();  // Read user input
             
            switch (choice) {
-             case "1":
-                try {
-                    System.out.print("Enter a fully parenthesized expression: ");
-                    s = in.nextLine();
+                case "1":
+                    try {
+                        System.out.print("Enter a fully parenthesized expression: ");
+                        s = in.nextLine();
 
-                    // Pre-check for balanced parentheses (before calling isLegal)
-                    if (hasBalancedParentheses(s)) {
-                        if (isLegal(s)) {
-                            System.out.println(s + " is a legal parenthesization.");
+                        // Pre-check for balanced parentheses (before calling isLegal)
+                        if (hasBalancedParentheses(s)) {
+                            if (isLegal(s)) {
+                                System.out.println(s + " is a legal parenthesization.");
+                            } else {
+                                System.out.println(s + " is not a legal parenthesization.");
+                                s = null;  // Reset if illegal
+                            }
                         } else {
-                            System.out.println(s + " is not a legal parenthesization.");
-                            s = null;  // reset if illegal
+                            System.out.println(s + " has unbalanced parentheses.");
+                            s = null;  // Reset if illegal
                         }
-                    } else {
-                        System.out.println(s + " is not a legal parenthesization.");
-                        s = null;  // reset if illegal
+                    } catch (UnderflowException e) {
+                        // Catch the UnderflowException if popping from an empty stack
+                        System.out.println("The expression has unbalanced parentheses: " + s);
                     }
-                } catch (UnderflowException e) {
-                    // Catch the UnderflowException if popping from an empty stack
-                   System.out.println("The expression has unbalanced parentheses: " + s);
+                    break;
 
-                }
-                break;
-
-                 
-              // Evaluate the fully parenthesized (infix) expression.
-              case "2":
-                    
+                case "2":
+                    // Evaluate the fully parenthesized (infix) expression
                     if (s != null && isLegal(s)) {
-                        // Evaluate infix expression
-                        evaluateExpr(s);
+                        System.out.print("Do you want to use the previously entered expression? (yes/no): ");
+                        String response = in.nextLine();
+
+                        if (response.equalsIgnoreCase("no")) {
+                            System.out.print("Enter a new fully parenthesized expression: ");
+                            String newExpression = in.nextLine();
+
+                            if (hasBalancedParentheses(newExpression) && isLegal(newExpression)) {
+                                evaluateExpr(newExpression);
+                            } else {
+                                System.out.println("Invalid new expression.");
+                            }
+                        } else if (response.equalsIgnoreCase("yes")) {
+                            evaluateExpr(s);
+                        } else {
+                            System.out.println("Invalid choice.");
+                        }
                     } else {
                         System.out.println("No valid fully parenthesized expression entered.");
                     }
                     break;
 
-
-             case "3":
+                case "3":
                     // Convert the expression to postfix notation
                     if (s != null) {
                         currentPostfixExpression = convertToPostfix(s);
@@ -70,7 +81,7 @@ public class StackDriver {
                     }
                     break;
 
-             case "4":
+                case "4":
                     // Evaluate the postfix expression
                     if (currentPostfixExpression != null) {
                         System.out.print("Do you want to use the previously converted postfix expression? (yes/no): ");
@@ -86,20 +97,18 @@ public class StackDriver {
                         System.out.println("No postfix expression to evaluate.");
                     }
                     break;
- 
-            case "5":
-                // Exit the program
-                exit = true;
-                System.out.println("Exiting...");
 
-                break;
- 
-            default:
-                // Handle invalid input
-                System.out.println("Invalid choice, please try again.");
-                break;
+                case "5":
+                    // Exit the program
+                    exit = true;
+                    System.out.println("Exiting...");
+                    break;
+
+                default:
+                    // Handle invalid input
+                    System.out.println("Invalid choice, please try again.");
+                    break;
             }
-            
         }
         in.close();
 
@@ -120,34 +129,10 @@ public class StackDriver {
         }
         return s.isEmpty();
     }
-    // Method to check if the postfix expression is not legal
-    public static boolean isNotLegal(String str) {
-        int operandCount = 0;
-        int operatorCount = 0;
+   
 
-        // Traverse the postfix expression
-        for (int i = 0; i < str.length(); i++) {
-            char ch = str.charAt(i);
 
-            // If it's a digit, it's an operand
-            if (Character.isDigit(ch)) {
-                operandCount++;
-            }
-            // If it's an operator, increment the operator count
-            else if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%') {
-                operatorCount++;
-
-                // At any point, operators must not exceed operands - 1
-                if (operatorCount >= operandCount) {
-                    return true;  // Not legal
-                }
-            }
-        }
-
-        // At the end, the operand count should be exactly one more than operator count
-        return operandCount != operatorCount + 1;
-    }
-    // Helper method to check if parentheses are balanced
+    // Check if the parentheses in the expression are balanced
     public static boolean hasBalancedParentheses(String str) {
         int balance = 0; // tracks the balance of parentheses
 
@@ -158,13 +143,12 @@ public class StackDriver {
             } else if (ch == ')') {
                 balance--;  // decrease balance for ')'
                 if (balance < 0) {
-                    // If at any point, balance goes negative, we have an extra ')'
+                    // If balance goes negative, there is an extra ')'
                     return false;
                 }
             }
         }
-
-        // In the end, balance should be 0 for fully balanced parentheses
+        // The balance should be zero if parentheses are fully balanced
         return balance == 0;
     }
 
@@ -217,7 +201,11 @@ public class StackDriver {
                 }
             }
         }
+        if (!s1.isEmpty()) {
         System.out.println("The result of the expression is: " + s1.topAndPop());
+        } else {
+        System.out.println("Error: No result found in the expression.");
+        }
     }
         // Method to convert an infix expression to postfix notation
     public static String convertToPostfix(String str) {
